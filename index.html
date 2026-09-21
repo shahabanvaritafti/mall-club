@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>باشگاه مشتریان مرکز خرید</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="header">
+    <h1>مرکز خرید آرمانی</h1>
+    <p>تجربه یک خرید مدرن به همراه تخفیف‌های لحظه‌ای و جوایز ویژه</p>
+  </header>
+
+  <main class="container">
+    
+    <!-- بخش گردونه شانس -->
+    <section class="card wheel-section">
+      <h2>گردونه شانس مشتریان</h2>
+      <p>شماره موبایل خود را وارد کنید، گردونه را بچرخانید و تخفیف خرید حضوری بگیرید!</p>
+      
+      <div class="input-group">
+        <input type="tel" id="mobileInput" placeholder="۰۹۱۲۳۴۵۶۷۸۹" maxlength="11">
+        <button id="spinBtn" onclick="spinWheel()">چرخاندن گردونه</button>
+      </div>
+
+      <div class="wheel-box">
+        <div class="arrow">▼</div>
+        <div class="wheel" id="wheel"></div>
+      </div>
+
+      <div id="resultMessage" class="result"></div>
+    </section>
+
+    <!-- بخش معرفی اصناف -->
+    <section class="card">
+      <h2>واحدهای تجاری و اصناف پاساژ</h2>
+      <div class="grid">
+        <div class="shop-item">
+          <h3>کافه و رستوران</h3>
+          <p>طبقه همکف - واحدهای ۱۰۱ تا ۱۰۵</p>
+          <span class="tag">تخفیف پاسکاری فعال</span>
+        </div>
+        <div class="shop-item">
+          <h3>پوشاک و مد</h3>
+          <p>طبقه اول - واحدهای ۲۰۱ تا ۲۱۵</p>
+          <span class="tag">اعتبار کیف پول</span>
+        </div>
+        <div class="shop-item">
+          <h3>عطر و لوازم آرایشی</h3>
+          <p>طبقه دوم - واحدهای ۳۰۱ تا ۳۰۸</p>
+          <span class="tag">تخفیف لحظه‌ای پوز</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
