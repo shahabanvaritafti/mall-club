@@ -17,7 +17,7 @@ function spinWheel() {
   const randomDegree = Math.floor(Math.random() * 360);
   currentRotation += 1440 + randomDegree;
 
-  const wheel = document.getElementById("wheel");
+  const wheel = document.getElementById("wheelContainer");
   wheel.style.transform = `rotate(${currentRotation}deg)`;
 
   setTimeout(() => {
