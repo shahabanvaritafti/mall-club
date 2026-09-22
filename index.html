@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>باشگاه مشتریان مرکز خرید</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,7 +18,6 @@
 
   <main class="container">
     
-    <!-- بخش گردونه شانس -->
     <section class="card wheel-section">
       <h2>گردونه شانس مشتریان</h2>
       <p>شماره موبایل خود را وارد کنید، گردونه را بچرخانید و تخفیف خرید حضوری بگیرید!</p>
@@ -27,13 +29,41 @@
 
       <div class="wheel-box">
         <div class="arrow">▼</div>
-        <div class="wheel" id="wheel"></div>
+        <div class="wheel-container" id="wheelContainer">
+          <svg viewBox="0 0 400 400" class="wheel-svg">
+            <g transform="translate(200, 200)">
+              <!-- قاچ ۱: کافی‌شاپ -->
+              <path d="M 0 0 L 0 -200 A 200 200 0 0 1 173.2 -100 Z" fill="#ffb74d"/>
+              <text transform="rotate(30) translate(0, -120) rotate(90)" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">کافی‌شاپ ۲۰٪</text>
+
+              <!-- قاچ ۲: پوشاک -->
+              <path d="M 0 0 L 173.2 -100 A 200 200 0 0 1 173.2 100 Z" fill="#4fc3f7"/>
+              <text transform="rotate(90) translate(0, -120) rotate(90)" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">پوشاک ۱۵٪</text>
+
+              <!-- قاچ ۳: ۵۰ هزار تومان -->
+              <path d="M 0 0 L 173.2 100 A 200 200 0 0 1 0 200 Z" fill="#81c784"/>
+              <text transform="rotate(150) translate(0, -120) rotate(90)" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">۵۰ تومن نقد</text>
+
+              <!-- قاچ ۴: لوازم آرایشی -->
+              <path d="M 0 0 L 0 200 A 200 200 0 0 1 -173.2 100 Z" fill="#e57373"/>
+              <text transform="rotate(210) translate(0, -120) rotate(90)" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">عطر و آرایشی ۱۰٪</text>
+
+              <!-- قاچ ۵: پوچ -->
+              <path d="M 0 0 L -173.2 100 A 200 200 0 0 1 -173.2 -100 Z" fill="#ba68c8"/>
+              <text transform="rotate(270) translate(0, -120) rotate(90)" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">شانس دوباره</text>
+
+              <!-- قاچ ۶: کیف و کفش -->
+              <path d="M 0 0 L -173.2 -100 A 200 200 0 0 1 0 -200 Z" fill="#fff176"/>
+              <text transform="rotate(330) translate(0, -120) rotate(90)" text-anchor="middle" fill="#444" font-weight="bold" font-size="16">کیف و کفش ۲۵٪</text>
+            </g>
+          </svg>
+          <div class="wheel-center-cap"></div>
+        </div>
       </div>
 
       <div id="resultMessage" class="result"></div>
     </section>
 
-    <!-- بخش معرفی اصناف -->
     <section class="card">
       <h2>واحدهای تجاری و اصناف پاساژ</h2>
       <div class="grid">
