@@ -1,152 +1,198 @@
 * {
   box-sizing: border-box;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
 }
 
 body {
-  background-color: #f4f6f9;
-  color: #333;
+  background-color: #f0f3f8;
+  color: #2c3e50;
+  line-height: 1.6;
 }
 
 .header {
   background: linear-gradient(135deg, #1e3c72, #2a5298);
   color: white;
   text-align: center;
-  padding: 40px 20px;
+  padding: 45px 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .header h1 {
-  font-size: 2rem;
+  font-size: 2.2rem;
+  font-weight: 800;
   margin-bottom: 10px;
+}
+
+.header p {
+  font-size: 1.05rem;
+  opacity: 0.9;
 }
 
 .container {
   max-width: 800px;
-  margin: 20px auto;
+  margin: 30px auto;
   padding: 0 15px;
 }
 
 .card {
   background: white;
-  border-radius: 12px;
-  padding: 25px;
+  border-radius: 16px;
+  padding: 30px;
   margin-bottom: 25px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 .card h2 {
-  margin-bottom: 15px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 12px;
   color: #1e3c72;
+  text-align: center;
+}
+
+.card > p {
+  text-align: center;
+  color: #666;
+  font-size: 0.95rem;
 }
 
 .input-group {
   display: flex;
-  gap: 10px;
-  margin: 20px 0;
+  gap: 12px;
+  margin: 25px 0;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 input {
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
+  padding: 12px 18px;
+  border: 2px solid #dfe4ea;
+  border-radius: 10px;
+  font-size: 1.05rem;
   text-align: center;
-  width: 200px;
+  width: 220px;
+  outline: none;
+  transition: 0.2s border-color;
+}
+
+input:focus {
+  border-color: #ff9800;
 }
 
 button {
   background-color: #ff9800;
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 12px 28px;
+  border-radius: 10px;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
-  transition: 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.35);
+  transition: transform 0.1s, background-color 0.2s;
 }
 
 button:hover {
-  background-color: #e68900;
+  background-color: #f57c00;
 }
 
+button:active {
+  transform: scale(0.98);
+}
+
+/* محفظه گردونه */
 .wheel-box {
   position: relative;
-  width: 260px;
-  height: 260px;
-  margin: 20px auto;
+  width: 320px;
+  height: 320px;
+  margin: 25px auto;
 }
 
 .arrow {
   position: absolute;
-  top: -15px;
+  top: -16px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 24px;
+  font-size: 30px;
   color: #d32f2f;
-  z-index: 10;
+  z-index: 20;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
 }
 
-.wheel {
+.wheel-container {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 6px solid #1e3c72;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+  border: 7px solid #ffffff;
   position: relative;
   overflow: hidden;
-  transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-  background: conic-gradient(
-    #ffcc80 0deg 60deg,
-    #90caf9 60deg 120deg,
-    #a5d6a7 120deg 180deg,
-    #ef9a9a 180deg 240deg,
-    #ce93d8 240deg 300deg,
-    #fff59d 300deg 360deg
-  );
+  transition: transform 4s cubic-bezier(0.15, 0.9, 0.2, 1);
+}
+
+.wheel-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.wheel-center-cap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  background: #ffffff;
+  border: 4px solid #1e3c72;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .result {
   text-align: center;
   font-size: 1.1rem;
-  font-weight: bold;
-  margin-top: 15px;
+  font-weight: 700;
+  margin-top: 20px;
   color: #2e7d32;
-  line-height: 1.6;
+  line-height: 1.8;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 15px;
-  margin-top: 15px;
+  margin-top: 20px;
 }
 
 .shop-item {
-  background: #fafafa;
-  border: 1px solid #eee;
-  padding: 15px;
-  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 18px;
+  border-radius: 12px;
 }
 
 .shop-item h3 {
-  font-size: 1.1rem;
-  margin-bottom: 5px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #1e293b;
 }
 
 .shop-item p {
-  font-size: 0.85rem;
-  color: #666;
-  margin-bottom: 10px;
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 12px;
 }
 
 .tag {
   display: inline-block;
-  background-color: #e3f2fd;
-  color: #1976d2;
-  font-size: 0.75rem;
-  padding: 3px 8px;
-  border-radius: 4px;
+  background-color: #e0f2fe;
+  color: #0284c7;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
 }
