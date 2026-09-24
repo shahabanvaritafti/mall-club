@@ -3,93 +3,313 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>باشگاه مشتریان مرکز خرید</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <title>مرکز تجاری مهستان | باشگاه مشتریان</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vazirmatn/33.0.3/Vazirmatn-font-face.min.css">
+  <style>
+    :root {
+      --bg-gradient: radial-gradient(circle at 50% 20%, #205c68 0%, #0d282e 70%, #061518 100%);
+      --card-bg: rgba(13, 40, 46, 0.75);
+      --gold-primary: #d4af37;
+      --gold-light: #f7e7a9;
+      --gold-gradient: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7);
+      --teal-accent: #2e8b9a;
+      --text-light: #f1f5f9;
+      --border-gold: rgba(212, 175, 55, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Vazirmatn', -apple-system, sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 15px 50px;
+    }
+
+    header {
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .brand-logo {
+      width: 95px;
+      height: 95px;
+      border-radius: 50%;
+      border: 2px solid var(--gold-primary);
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+      margin-bottom: 12px;
+      object-fit: cover;
+      background: #0d282e;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(212, 175, 55, 0.12);
+      color: var(--gold-light);
+      border: 1px solid var(--border-gold);
+      padding: 4px 18px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 1.85rem;
+      font-weight: 900;
+      color: var(--gold-light);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+      margin-bottom: 6px;
+    }
+
+    p.sub {
+      color: #9ac2c9;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .box {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-gold);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      border-radius: 24px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .wheel-wrap {
+      position: relative;
+      width: 290px;
+      height: 290px;
+      margin: 15px auto 25px;
+    }
+
+    #wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 5px solid var(--gold-primary);
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.35);
+      transition: transform 4.5s cubic-bezier(0.15, 0.9, 0.2, 1);
+    }
+
+    .pointer {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 26px solid #e11d48;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
+      z-index: 30;
+    }
+
+    .pin {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      background: radial-gradient(circle, #fff 0%, #ecd38c 100%);
+      border: 3px solid var(--gold-primary);
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .input-title {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      text-align: right;
+      margin-bottom: 6px;
+      margin-right: 4px;
+    }
+
+    input[type="tel"] {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      border: 1px solid var(--border-gold);
+      background: rgba(6, 21, 24, 0.85);
+      color: #fff;
+      font-size: 1.15rem;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="tel"]:focus {
+      border-color: var(--gold-light);
+    }
+
+    button.btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: var(--gold-gradient);
+      color: #0b1a1d;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+      transition: transform 0.15s, opacity 0.2s;
+    }
+
+    button.btn:active {
+      transform: scale(0.98);
+    }
+
+    button.btn:disabled {
+      background: #334155;
+      color: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    #resultBox {
+      display: none;
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(46, 139, 154, 0.25);
+      border: 1px solid var(--gold-primary);
+      color: var(--gold-light);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+  </style>
 </head>
 <body>
 
-  <header class="header">
-    <h1>مرکز خرید آرمانی</h1>
-    <p>تجربه یک خرید مدرن به همراه تخفیف‌های لحظه‌ای و جوایز ویژه</p>
+  <header>
+    <img src="/logo.png" alt="لوگو مرکز خرید مهستان" class="brand-logo" onerror="this.style.display='none'">
+    <div class="badge">مرکز تجاری مهستان</div>
+    <h1>باشگاه مشتریان مهستان</h1>
+    <p class="sub">گردونه شانس و تخفیف هوشمند پای صندوق کارتخوان</p>
   </header>
 
-  <main class="container">
-    
-    <section class="card wheel-section">
-      <h2>گردونه شانس مشتریان</h2>
-      <p>شماره موبایل خود را وارد کنید، گردونه را بچرخانید و تخفیف خرید حضوری بگیرید!</p>
-      
-      <div class="input-group">
-        <input type="tel" id="mobileInput" placeholder="۰۹۱۲۳۴۵۶۷۸۹" maxlength="11">
-        <button id="spinBtn" onclick="spinWheel()">چرخاندن گردونه</button>
-      </div>
+  <div class="box">
+    <div class="wheel-wrap">
+      <div class="pointer"></div>
+      <div class="pin">✨</div>
+      <canvas id="wheel" width="290" height="290"></canvas>
+    </div>
 
-      <div class="wheel-box">
-        <div class="arrow">▼</div>
-        <div class="wheel-container" id="wheelContainer">
-          <svg viewBox="0 0 400 400" class="wheel-svg">
-            <g transform="translate(200, 200)">
-              <!-- قاچ ۱: کافی‌شاپ -->
-              <path d="M 0 0 L 0 -200 A 200 200 0 0 1 173.2 -100 Z" fill="#ffb74d"/>
-              <text transform="rotate(30) translate(0, -120) rotate(90)" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">کافی‌شاپ ۲۰٪</text>
+    <div class="input-title">شماره همراه خود را وارد کنید:</div>
+    <input type="tel" id="mobile" placeholder="۰۹۱۲۳۴۵۶۷۸۹" maxlength="11">
+    <button class="btn" id="spinBtn" onclick="spinWheel()">گرداندن گردونه و دریافت تخفیف</button>
+    <div id="resultBox"></div>
+  </div>
 
-              <!-- قاچ ۲: پوشاک -->
-              <path d="M 0 0 L 173.2 -100 A 200 200 0 0 1 173.2 100 Z" fill="#4fc3f7"/>
-              <text transform="rotate(90) translate(0, -120) rotate(90)" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">پوشاک ۱۵٪</text>
+  <script>
+    // تطبیق با کدهای main.py بر پایه store_id
+    const prizes = [
+      { text: "۱۰٪ پوشاک زاگرس", bg: "#164e63" },
+      { text: "۱۵٪ کافه ویونا", bg: "#0f766e" },
+      { text: "۵٪ طلای آفتاب", bg: "#854d0e" },
+      { text: "۲۰٪ ادکلن باران", bg: "#155e75" },
+      { text: "۲۰٪ کافه ویونا", bg: "#115e59" },
+      { text: "۱۵٪ پوشاک زاگرس", bg: "#0e7490" }
+    ];
 
-              <!-- قاچ ۳: ۵۰ هزار تومان -->
-              <path d="M 0 0 L 173.2 100 A 200 200 0 0 1 0 200 Z" fill="#81c784"/>
-              <text transform="rotate(150) translate(0, -120) rotate(90)" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">۵۰ تومن نقد</text>
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const arc = (2 * Math.PI) / prizes.length;
 
-              <!-- قاچ ۴: لوازم آرایشی -->
-              <path d="M 0 0 L 0 200 A 200 200 0 0 1 -173.2 100 Z" fill="#e57373"/>
-              <text transform="rotate(210) translate(0, -120) rotate(90)" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">عطر و آرایشی ۱۰٪</text>
+    function drawWheel() {
+      for (let i = 0; i < prizes.length; i++) {
+        const angle = i * arc - (Math.PI / 2);
+        ctx.beginPath();
+        ctx.fillStyle = prizes[i].bg;
+        ctx.moveTo(145, 145);
+        ctx.arc(145, 145, 140, angle, angle + arc);
+        ctx.lineTo(145, 145);
+        ctx.fill();
 
-              <!-- قاچ ۵: شانس دوباره -->
-              <path d="M 0 0 L -173.2 100 A 200 200 0 0 1 -173.2 -100 Z" fill="#ba68c8"/>
-              <text transform="rotate(270) translate(0, -120) rotate(90)" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">شانس دوباره</text>
+        ctx.strokeStyle = "rgba(212, 175, 55, 0.4)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
-              <!-- قاچ ۶: کیف و کفش -->
-              <path d="M 0 0 L -173.2 -100 A 200 200 0 0 1 0 -200 Z" fill="#fff176"/>
-              <text transform="rotate(330) translate(0, -120) rotate(90)" text-anchor="middle" fill="#444" font-weight="bold" font-size="16">کیف و کفش ۲۵٪</text>
-            </g>
-          </svg>
-          <div class="wheel-center-cap"></div>
-        </div>
-      </div>
+        ctx.save();
+        ctx.translate(145, 145);
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#fcf6ba";
+        ctx.font = "bold 13px 'Vazirmatn', Tahoma";
+        ctx.shadowColor = "rgba(0,0,0,0.7)";
+        ctx.shadowBlur = 4;
+        ctx.fillText(prizes[i].text, 120, 5);
+        ctx.restore();
+      }
+    }
+    drawWheel();
 
-      <div id="resultMessage" class="result"></div>
-    </section>
+    let isSpinning = false;
+    async function spinWheel() {
+      const mobile = document.getElementById("mobile").value.trim();
+      if (!/^09[0-9]{9}$/.test(mobile)) {
+        alert("لطفاً شماره موبایل ۱۱ رقمی معتبر وارد کنید");
+        return;
+      }
+      if (isSpinning) return;
+      isSpinning = true;
 
-    <section class="card">
-      <h2>واحدهای تجاری و اصناف پاساژ</h2>
-      <div class="grid">
-        <div class="shop-item">
-          <h3>کافه و رستوران</h3>
-          <p>طبقه همکف - واحدهای ۱۰۱ تا ۱۰۵</p>
-          <span class="tag">تخفیف پاسکاری فعال</span>
-        </div>
-        <div class="shop-item">
-          <h3>پوشاک و مد</h3>
-          <p>طبقه اول - واحدهای ۲۰۱ تا ۲۱۵</p>
-          <span class="tag">اعتبار کیف پول</span>
-        </div>
-        <div class="shop-item">
-          <h3>عطر و لوازم آرایشی</h3>
-          <p>طبقه دوم - واحدهای ۳۰۱ تا ۳۰۸</p>
-          <span class="tag">تخفیف لحظه‌ای پوز</span>
-        </div>
-      </div>
-    </section>
+      const btn = document.getElementById("spinBtn");
+      btn.disabled = true;
+      btn.innerText = "در حال انتخاب تخفیف...";
 
-  </main>
+      try {
+        const res = await fetch("/api/spin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mobile: mobile })
+        });
+        const data = await res.json();
+        
+        const degSlice = 360 / prizes.length;
+        const stopAngle = 360 - (data.prize_index * degSlice) - (degSlice / 2);
+        canvas.style.transform = `rotate(${6 * 360 + stopAngle}deg)`;
 
-  <!-- کتابخانه اتصال به سوپابیس -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- اسکریپت اصلی گردونه -->
-  <script src="script.js"></script>
+        setTimeout(() => {
+          const r = document.getElementById("resultBox");
+          r.style.display = "block";
+          r.innerHTML = `🎉 <strong>تبریک!</strong> ${data.prize_title}<br><small style="color:#9ac2c9">این تخفیف روی دستگاه پوز همان فروشگاه در مهستان به صورت خودکار اعمال می‌شود.</small>`;
+          btn.innerText = "تخفیف شما ثبت شد";
+          isSpinning = false;
+        }, 4600);
+      } catch (e) {
+        alert("خطا در ارتباط با سرور");
+        btn.disabled = false;
+        btn.innerText = "تلاش مجدد";
+        isSpinning = false;
+      }
+    }
+  </script>
 </body>
 </html>
