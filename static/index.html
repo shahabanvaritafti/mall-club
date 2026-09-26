@@ -3,56 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>گردونه شانس باشگاه مشتریان مهستان</title>
+    <title>گردونه شانس مرکز خرید مهستان</title>
     <style>
         * { box-sizing: border-box; font-family: Tahoma, 'B Nazanin', sans-serif; }
         body {
-            background: linear-gradient(135deg, #1e3638, #102123);
+            background: linear-gradient(135deg, #182d30, #0c181a);
             color: #fff;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
         }
         .wheel-container {
             background-color: #1a2f32;
             border: 1px solid #376569;
             border-radius: 16px;
-            padding: 24px;
-            max-width: 420px;
+            padding: 20px;
+            max-width: 440px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
-        h2 { margin-top: 0; color: #80cbc4; font-size: 20px; }
-        p { font-size: 13px; color: #b0bec5; margin-bottom: 20px; }
-        .input-group { margin-bottom: 15px; text-align: right; }
-        label { display: block; font-size: 12px; margin-bottom: 6px; color: #cfd8dc; }
+        h2 { margin-top: 0; color: #80cbc4; font-size: 19px; }
+        p { font-size: 12px; color: #b0bec5; margin-bottom: 15px; }
+        .input-group { margin-bottom: 12px; text-align: right; }
+        label { display: block; font-size: 12px; margin-bottom: 5px; color: #cfd8dc; }
         input {
             width: 100%;
-            padding: 10px 12px;
+            padding: 10px;
             border-radius: 8px;
             border: 1px solid #376569;
             background: #0f1c1e;
             color: #fff;
-            font-size: 14px;
+            font-size: 15px;
             text-align: center;
+            outline: none;
             direction: ltr;
         }
         .canvas-wrapper {
             position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 20px auto;
+            width: 320px;
+            height: 320px;
+            margin: 15px auto;
         }
         #wheelCanvas {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            box-shadow: 0 0 15px rgba(0,0,0,0.4);
-            transition: transform 4s cubic-bezier(0.15, 0.95, 0.35, 1);
+            transition: transform 4s cubic-bezier(0.12, 0.95, 0.32, 1);
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
         }
         .pointer {
             position: absolute;
@@ -70,24 +71,23 @@
             background-color: #4eb5a5;
             color: #0b1a1c;
             border: none;
-            padding: 12px 24px;
+            padding: 12px 20px;
             font-size: 15px;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
             width: 100%;
             margin-top: 10px;
-            transition: 0.2s;
         }
-        .btn-spin:disabled { background-color: #526e70; cursor: not-allowed; }
-        #resultMsg { margin-top: 15px; font-size: 14px; font-weight: bold; min-height: 22px; }
+        .btn-spin:disabled { background-color: #475a5c; cursor: not-allowed; }
+        #resultMsg { margin-top: 15px; font-size: 13px; font-weight: bold; min-height: 24px; line-height: 1.6; }
     </style>
 </head>
 <body>
 
 <div class="wheel-container">
     <h2>گردونه شانس مرکز خرید مهستان</h2>
-    <p>شماره موبایل خود را وارد کرده و گردونه را بچرخانید</p>
+    <p>شماره موبایل خود را وارد کرده و تخفیف ویژه فروشگاه‌ها را ببرید</p>
 
     <div class="input-group">
         <label for="mobileInput">شماره موبایل خریدار:</label>
@@ -96,7 +96,7 @@
 
     <div class="canvas-wrapper">
         <div class="pointer"></div>
-        <canvas id="wheelCanvas" width="300" height="300"></canvas>
+        <canvas id="wheelCanvas" width="340" height="340"></canvas>
     </div>
 
     <button id="spinBtn" class="btn-spin" onclick="startSpin()">چرخش گردونه</button>
@@ -110,16 +110,17 @@
     const mobileInput = document.getElementById('mobileInput');
     const resultMsg = document.getElementById('resultMsg');
 
-    // آیتم‌های تخفیف روی گردونه
+    // فروشگاه‌های مهستان با تخفیف اختصاصی
     const segments = [
-        { label: "۵٪ تخفیف", percent: 5, color: "#1f4044" },
-        { label: "۱۰٪ تخفیف", percent: 10, color: "#2d5d63" },
-        { label: "۱۵٪ تخفیف", percent: 15, color: "#3b7a82" },
-        { label: "۲۰٪ تخفیف", percent: 20, color: "#4eb5a5" },
-        { label: "۵٪ تخفیف", percent: 5, color: "#1f4044" },
-        { label: "۱۰٪ تخفیف", percent: 10, color: "#2d5d63" },
-        { label: "۱۵٪ تخفیف", percent: 15, color: "#3b7a82" },
-        { label: "۲۵٪ تخفیف", percent: 25, color: "#e0a926" }
+        { name: "رزتن", terminal_id: "45034950", percent: 10, color: "#1f4044" },
+        { name: "ماریوسونیک", terminal_id: "99031044", percent: 12, color: "#29565c" },
+        { name: "لوکا", terminal_id: "9946922", percent: 8, color: "#366e75" },
+        { name: "کاتوزیان", terminal_id: "99225982", percent: 20, color: "#c98f1a" },
+        { name: "زیرو", terminal_id: "099034315", percent: 5, color: "#22474b" },
+        { name: "طلای اکسین", terminal_id: "45251385", percent: 2, color: "#8a7322" },
+        { name: "دیپ لوک", terminal_id: "99231122", percent: 20, color: "#d69818" },
+        { name: "کنزپلاس", terminal_id: "99445302", percent: 5, color: "#2e5e64" },
+        { name: "چیلک", terminal_id: "99354094", percent: 5, color: "#3d7c85" }
     ];
 
     const numSegments = segments.length;
@@ -127,7 +128,6 @@
     let currentDegree = 0;
     let isSpinning = false;
 
-    // رسم گردونه
     function drawWheel() {
         const radius = canvas.width / 2;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -140,16 +140,18 @@
             ctx.arc(radius, radius, radius, angle, angle + arc);
             ctx.lineTo(radius, radius);
             ctx.fill();
+            ctx.strokeStyle = "#102325";
+            ctx.lineWidth = 2;
             ctx.stroke();
 
-            // متن‌ها
+            // رسم عنوان مغازه و درصد
             ctx.save();
             ctx.translate(radius, radius);
             ctx.rotate(angle + arc / 2);
             ctx.textAlign = "right";
             ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 13px Tahoma";
-            ctx.fillText(seg.label, radius - 20, 5);
+            ctx.font = "bold 12px Tahoma";
+            ctx.fillText(`${seg.name} (٪${seg.percent})`, radius - 15, 4);
             ctx.restore();
         });
     }
@@ -159,7 +161,7 @@
     async function startSpin() {
         const mobile = mobileInput.value.trim();
         if (!mobile || mobile.length < 10) {
-            alert("لطفاً یک شماره موبایل معتبر وارد کنید.");
+            alert("لطفاً شماره موبایل را به درستی وارد کنید.");
             return;
         }
 
@@ -168,27 +170,20 @@
         spinBtn.disabled = true;
         resultMsg.innerText = "";
 
-        // انتخاب رندوم یک سگمنت
         const pickedIndex = Math.floor(Math.random() * numSegments);
         const prize = segments[pickedIndex];
 
-        // محاسبه زاویه چرخش به طوری که سوزن بالا روی سگمنت موردنظر قرار گیرد
-        // سوزن در زاویه 270 درجه (بالا) قرار دارد
         const segmentDeg = 360 / numSegments;
         const targetDeg = (360 - (pickedIndex * segmentDeg) - (segmentDeg / 2) + 270) % 360;
-        const extraRounds = 5 * 360; // ۵ دور چرخش کامل برای شتاب بصری
+        const extraRounds = 5 * 360;
         currentDegree += extraRounds + (targetDeg - (currentDegree % 360) + 360) % 360;
 
-        // اجرای موشن چرخش
         canvas.style.transform = `rotate(${currentDegree}deg)`;
 
-        // منتظر ماندن تا اتمام انیمیشن (۴ ثانیه طبق CSS)
         setTimeout(async () => {
             isSpinning = false;
             spinBtn.disabled = false;
-            resultMsg.innerText = `تبریک! شما برنده ${prize.label} شدید. در حال ثبت...`;
 
-            // ثبت کوپن در دیتابیس از طریق API
             try {
                 const response = await fetch('/api/spin', {
                     method: 'POST',
@@ -196,18 +191,17 @@
                     body: JSON.stringify({
                         mobile: mobile,
                         discount_percent: prize.percent,
-                        terminal_id: "11112222"
+                        terminal_id: prize.terminal_id
                     })
                 });
 
-                const resData = await response.json();
                 if (response.ok) {
-                    resultMsg.innerText = `کوپن ${prize.percent}٪ با موفقیت برای شماره ${mobile} ثبت گردید.`;
+                    resultMsg.innerHTML = `<span style="color:#80cbc4;">تبریک! کوپن <b>${prize.percent}٪ تخفیف</b> فروشگاه <b>${prize.name}</b> برای شماره شما فعال گردید.</span>`;
                 } else {
-                    resultMsg.innerText = "خطا در ثبت کوپن: " + (resData.detail || "مشکل سرور");
+                    resultMsg.innerText = "خطا در ثبت کوپن تخفیف.";
                 }
             } catch (err) {
-                resultMsg.innerText = "ارتباط با سرور برقرار نشد.";
+                resultMsg.innerText = "خطای اتصال به سرور.";
                 console.error(err);
             }
         }, 4000);
