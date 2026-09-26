@@ -26,7 +26,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            position: relative;
         }
         .pos-brand {
             font-size: 13px;
@@ -42,38 +41,37 @@
             width: 100%;
             padding: 16px;
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.2);
-            min-height: 220px;
+            min-height: 250px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
         .screen-header {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             color: #004d40;
             border-bottom: 1px dashed #80cbc4;
             padding-bottom: 6px;
             text-align: center;
         }
-        .input-group {
-            margin-top: 10px;
-        }
+        .input-group { margin-top: 8px; }
         .input-group label {
             display: block;
             font-size: 11px;
             color: #004d40;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             font-weight: bold;
         }
-        .pos-screen input {
+        .pos-screen input, .pos-screen select {
             width: 100%;
-            padding: 8px;
+            padding: 7px;
             border: 1px solid #80cbc4;
             border-radius: 6px;
             font-size: 13px;
             text-align: center;
             outline: none;
-            direction: ltr;
+            background: #fff;
+            color: #000;
         }
         .screen-msg {
             font-size: 12px;
@@ -93,14 +91,9 @@
             margin-top: 8px;
             font-size: 13px;
         }
-        .btn-action:hover { background-color: #004d40; }
-        .btn-swipe {
-            background-color: #d32f2f;
-            display: none;
-        }
+        .btn-swipe { background-color: #d32f2f; }
         .btn-swipe:hover { background-color: #b71c1c; }
         
-        /* پرینتر و فیش حرارتی */
         .paper-slot {
             width: 220px;
             height: 8px;
@@ -109,7 +102,7 @@
             margin-bottom: 15px;
         }
         .receipt-container {
-            width: 260px;
+            width: 270px;
             background: #ffffff;
             color: #111;
             padding: 16px;
@@ -137,7 +130,7 @@
         .receipt-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
         .receipt-row.bold { font-weight: bold; }
         .receipt-footer {
@@ -154,36 +147,48 @@
 <div style="display: flex; flex-direction: column; align-items: center;">
     <div class="paper-slot"></div>
 
-    <!-- بدنه کارتخوان -->
     <div class="pos-device">
         <div class="pos-brand">SAMAN KISH • MAHESTAN POS</div>
         
-        <div class="pos-screen" id="posScreen">
-            <div class="screen-header">باشگاه مشتریان پاساژ مهستان (پوشاک زاگرس)</div>
+        <div class="pos-screen">
+            <div class="screen-header">باشگاه مشتریان مرکز خرید مهستان</div>
             
             <div id="stepInputs">
                 <div class="input-group">
-                    <label>شماره موبایل مشتری:</label>
-                    <input type="text" id="posMobile" placeholder="09xxxxxxxxx" value="09121111111" maxlength="11">
+                    <label>فروشگاه پذیرنده (پایانه):</label>
+                    <select id="posTerminal">
+                        <option value="45034950">رزتن (45034950)</option>
+                        <option value="99031044">ماریوسونیک (99031044)</option>
+                        <option value="9946922">لوکا (9946922)</option>
+                        <option value="99225982">کاتوزیان (99225982)</option>
+                        <option value="099034315">زیرو (099034315)</option>
+                        <option value="45251385">طلای اکسین (45251385)</option>
+                        <option value="99231122">دیپ لوک (99231122)</option>
+                        <option value="99445302">کنزپلاس (99445302)</option>
+                        <option value="99354094">چیلک (99354094)</option>
+                    </select>
                 </div>
                 <div class="input-group">
-                    <label>مبلغ کل خرید (ریال):</label>
-                    <input type="number" id="posAmount" placeholder="مثلاً 1000000" value="1000000">
+                    <label>شماره موبایل مشتری:</label>
+                    <input type="text" id="posMobile" placeholder="09xxxxxxxxx" value="09134533348" maxlength="11">
                 </div>
-                <button class="btn-action" onclick="handleInquiry()">استعلام تخفیف و محاسبه</button>
+                <div class="input-group">
+                    <label>مبلغ کل فاکتور (ریال):</label>
+                    <input type="number" id="posAmount" value="1000000">
+                </div>
+                <button class="btn-action" onclick="handleInquiry()">استعلام تخفیف</button>
             </div>
 
             <div id="stepSwipe" style="display: none;">
                 <div class="screen-msg" id="inquiryInfo"></div>
-                <button class="btn-action btn-swipe" id="swipeBtn" style="display: block;" onclick="handlePayment()">💳 کشیدن کارت بانکی و پرداخت</button>
+                <button class="btn-action btn-swipe" onclick="handlePayment()">💳 کشیدن کارت و کسر وجه</button>
             </div>
         </div>
     </div>
 
-    <!-- فیش حرارتی پرینت‌شده -->
     <div class="receipt-container" id="thermalReceipt">
         <div class="receipt-title">باشگاه مشتریان مرکز خرید مهستان</div>
-        <div class="receipt-row"><span>فروشگاه:</span><span>پوشاک زاگرس</span></div>
+        <div class="receipt-row"><span>فروشگاه:</span><span id="rcpStore">-</span></div>
         <div class="receipt-row"><span>شماره مشتری:</span><span id="rcpMobile">-</span></div>
         <div class="receipt-row"><span>مبلغ کل فاکتور:</span><span id="rcpOriginal">-</span></div>
         <div class="receipt-row"><span>تخفیف باشگاه:</span><span id="rcpDiscount">-</span></div>
@@ -200,11 +205,12 @@
     let currentInquiryData = null;
 
     async function handleInquiry() {
+        const terminal_id = document.getElementById('posTerminal').value;
         const mobile = document.getElementById('posMobile').value.trim();
         const amount = parseInt(document.getElementById('posAmount').value);
 
         if (!mobile || !amount) {
-            alert('لطفاً شماره موبایل و مبلغ را به درستی وارد کنید.');
+            alert('لطفاً اطلاعات را کامل وارد کنید.');
             return;
         }
 
@@ -212,40 +218,27 @@
             const res = await fetch('/api/pos/inquiry', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    mobile: mobile,
-                    terminal_id: "11112222",
-                    amount: amount
-                })
+                body: JSON.stringify({ mobile, terminal_id, amount })
             });
-
-            if (!res.ok) {
-                const err = await res.json();
-                alert(err.detail || 'خطا در ارتباط با سرور');
-                return;
-            }
 
             currentInquiryData = await res.json();
 
-            // تغییر وضعیت صفحه پوز
             document.getElementById('stepInputs').style.display = 'none';
             document.getElementById('stepSwipe').style.display = 'block';
 
-            const discount = currentInquiryData.discount_amount;
-            const payable = currentInquiryData.payable_amount;
-
             document.getElementById('inquiryInfo').innerHTML = `
+                <div>فروشگاه: <b>${currentInquiryData.store_name}</b></div>
                 <div>مبلغ کل: <b>${amount.toLocaleString('fa-IR')} ریال</b></div>
-                <div style="color: #c62828;">تخفیف گردونه/باشگاه: <b>${discount.toLocaleString('fa-IR')} ریال</b></div>
-                <div style="font-size: 14px; margin-top: 8px; color: #004d40;">مبلغ قابل پرداخت: <br><b style="font-size: 17px;">${payable.toLocaleString('fa-IR')} ریال</b></div>
+                <div style="color: #c62828;">تخفیف کوپن: <b>${currentInquiryData.discount_amount.toLocaleString('fa-IR')} ریال</b></div>
+                <div style="font-size: 14px; margin-top: 6px; color: #004d40;">مبلغ قابل کسر: <br><b style="font-size: 16px;">${currentInquiryData.payable_amount.toLocaleString('fa-IR')} ریال</b></div>
             `;
         } catch (e) {
-            console.error(e);
-            alert('خطای اتصال به شبکه');
+            alert('خطای اتصال به سرور');
         }
     }
 
     async function handlePayment() {
+        const terminal_id = document.getElementById('posTerminal').value;
         const fakeRrn = Math.floor(100000000000 + Math.random() * 900000000000).toString();
         const mobile = document.getElementById('posMobile').value.trim();
 
@@ -255,7 +248,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     mobile: mobile,
-                    terminal_id: "11112222",
+                    terminal_id: terminal_id,
                     paid_amount: currentInquiryData.payable_amount,
                     rrn: fakeRrn
                 })
@@ -263,7 +256,7 @@
 
             const settleData = await res.json();
 
-            // چاپ رسید
+            document.getElementById('rcpStore').innerText = currentInquiryData.store_name;
             document.getElementById('rcpMobile').innerText = mobile;
             document.getElementById('rcpOriginal').innerText = currentInquiryData.original_amount.toLocaleString('fa-IR') + ' ریال';
             document.getElementById('rcpDiscount').innerText = currentInquiryData.discount_amount.toLocaleString('fa-IR') + ' ریال';
@@ -273,15 +266,12 @@
 
             document.getElementById('thermalReceipt').style.display = 'block';
 
-            // ریست صفحه پوز به حالت اولیه برای تراکنش بعدی بعد از ۳ ثانیه
             setTimeout(() => {
                 document.getElementById('stepInputs').style.display = 'block';
                 document.getElementById('stepSwipe').style.display = 'none';
             }, 3000);
-
         } catch (e) {
-            console.error(e);
-            alert('خطا در تسویه حساب شاپرک');
+            alert('خطا در تسویه');
         }
     }
 </script>
