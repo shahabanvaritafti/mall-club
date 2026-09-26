@@ -1,11 +1,13 @@
 import sqlite3
-from datetime import datetime
-from typing import Optional
+import random
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
+import os
 
-app = FastAPI(title="Mahestan Customer Club Core API")
+app = FastAPI(title="Mahestan Club Core API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,72 +17,83 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DB_PATH = "mahestan.db"
+if not os.path.exists("static"):
+    os.makedirs("static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# ----------------- Database Initialization -----------------
+DB_FILE = "mahestan.db"
+
+def get_db():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     cursor = conn.cursor()
     
-    # جدول پایانه‌های فروشگاهی پاساژ مهستان
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS stores (
-        terminal_id TEXT PRIMARY KEY,
-        store_name TEXT NOT NULL
-    )
+        CREATE TABLE IF NOT EXISTS stores (
+            terminal_id TEXT PRIMARY KEY,
+            store_name TEXT NOT NULL,
+            default_discount INTEGER DEFAULT 5
+        )
     """)
     
-    # جدول کاربران و موجودی کیف‌پول (کش‌بک)
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        mobile TEXT PRIMARY KEY,
-        wallet_balance INTEGER DEFAULT 0
-    )
+        CREATE TABLE IF NOT EXISTS users (
+            mobile TEXT PRIMARY KEY,
+            wallet_balance INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
     """)
     
-    # جدول کوپن‌های تخصیص‌یافته از گردونه شانس
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS coupons (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        mobile TEXT NOT NULL,
-        terminal_id TEXT NOT NULL,
-        discount_percent INTEGER NOT NULL,
-        status TEXT DEFAULT 'ACTIVE',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
+        CREATE TABLE IF NOT EXISTS coupons (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            mobile TEXT NOT NULL,
+            terminal_id TEXT NOT NULL,
+            discount_percent INTEGER NOT NULL,
+            status TEXT DEFAULT 'ACTIVE',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
     """)
     
-    # جدول لاگ تراکنش‌های تسویه‌شده پای پوز
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS transactions (
-        rrn TEXT PRIMARY KEY,
-        mobile TEXT NOT NULL,
-        terminal_id TEXT NOT NULL,
-        paid_amount INTEGER NOT NULL,
-        cashback_amount INTEGER NOT NULL,
-        is_winner BOOLEAN DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
+        CREATE TABLE IF NOT EXISTS transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rrn TEXT UNIQUE NOT NULL,
+            mobile TEXT NOT NULL,
+            terminal_id TEXT NOT NULL,
+            paid_amount INTEGER NOT NULL,
+            cashback_amount INTEGER NOT NULL,
+            is_winner BOOLEAN DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
     """)
     
-    # ثبت پایانه تستی پیش‌فرض (فروشگاه زاگرس)
-    cursor.execute("INSERT OR IGNORE INTO stores (terminal_id, store_name) VALUES ('11112222', 'پوشاک زاگرس')")
+    initial_stores = [
+        ("45034950", "رزتن", 10),
+        ("99031044", "ماریوسونیک", 12),
+        ("9946922", "لوکا", 8),
+        ("99225982", "کاتوزیان", 20),
+        ("099034315", "زیرو", 5),
+        ("45251385", "طلای اکسین", 2),
+        ("99231122", "دیپ لوک", 20),
+        ("99445302", "کنزپلاس", 5),
+        ("99354094", "چیلک", 5)
+    ]
+    cursor.executemany("INSERT OR REPLACE INTO stores (terminal_id, store_name, default_discount) VALUES (?, ?, ?)", initial_stores)
     
     conn.commit()
     conn.close()
 
 init_db()
 
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-# ----------------- Pydantic Models -----------------
 class SpinRequest(BaseModel):
     mobile: str
     discount_percent: int
-    terminal_id: str = "11112222"
+    terminal_id: str
 
 class InquiryRequest(BaseModel):
     mobile: str
@@ -93,155 +106,121 @@ class SettleRequest(BaseModel):
     paid_amount: int
     rrn: str
 
-# ----------------- 1. Spin to Win Endpoint -----------------
+@app.get("/")
+def home():
+    return FileResponse("static/index.html")
+
+@app.get("/admin")
+def serve_admin():
+    return FileResponse("static/admin.html")
+
+@app.get("/pos")
+def serve_pos():
+    return FileResponse("static/pos.html")
+
+@app.get("/api/stores")
+def get_stores():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT terminal_id, store_name, default_discount FROM stores")
+    stores = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return stores
+
 @app.post("/api/spin")
-def spin_wheel(payload: SpinRequest):
+def spin_wheel(data: SpinRequest):
     conn = get_db()
     cursor = conn.cursor()
     
-    # اطمینان از وجود کاربر
-    cursor.execute("INSERT OR IGNORE INTO users (mobile) VALUES (?)", (payload.mobile,))
-    
-    # ثبت کوپن فعال
+    cursor.execute("INSERT OR IGNORE INTO users (mobile) VALUES (?)", (data.mobile,))
     cursor.execute(
         "INSERT INTO coupons (mobile, terminal_id, discount_percent, status) VALUES (?, ?, ?, 'ACTIVE')",
-        (payload.mobile, payload.terminal_id, payload.discount_percent)
+        (data.mobile, data.terminal_id, data.discount_percent)
     )
     conn.commit()
     conn.close()
-    
-    return {
-        "status": "OK",
-        "message": f"کوپن {payload.discount_percent}٪ برای شما فعال شد."
-    }
+    return {"status": "OK", "message": f"کوپن {data.discount_percent}٪ با موفقیت ثبت شد."}
 
-# ----------------- 2. POS Inquiry Endpoint -----------------
 @app.post("/api/pos/inquiry")
-def pos_inquiry(payload: InquiryRequest):
+def pos_inquiry(data: InquiryRequest):
     conn = get_db()
     cursor = conn.cursor()
     
-    # ۱. اعتبارسنجی پایانه
-    cursor.execute("SELECT store_name FROM stores WHERE terminal_id = ?", (payload.terminal_id,))
+    cursor.execute("SELECT store_name FROM stores WHERE terminal_id = ?", (data.terminal_id,))
     store = cursor.fetchone()
-    if not store:
-        conn.close()
-        raise HTTPException(status_code=404, detail="پایانه فروشگاهی در سامانه مهستان یافت نشد.")
+    store_name = store["store_name"] if store else "فروشگاه مهستان"
     
-    store_name = store["store_name"]
-    
-    # ۲. بررسی کوپن فعال گردونه برای این شماره و این مغازه
     cursor.execute(
         "SELECT id, discount_percent FROM coupons WHERE mobile = ? AND terminal_id = ? AND status = 'ACTIVE' ORDER BY id DESC LIMIT 1",
-        (payload.mobile, payload.terminal_id)
+        (data.mobile, data.terminal_id)
     )
     coupon = cursor.fetchone()
     
     discount_amount = 0
     if coupon:
-        discount_percent = coupon["discount_percent"]
-        discount_amount = int(payload.amount * (discount_percent / 100))
+        discount_amount = int(data.amount * (coupon["discount_percent"] / 100))
         
-    payable_amount = payload.amount - discount_amount
+    payable_amount = max(0, data.amount - discount_amount)
     conn.close()
     
     return {
         "status": "OK",
         "store_name": store_name,
-        "original_amount": payload.amount,
+        "original_amount": data.amount,
         "discount_amount": discount_amount,
         "payable_amount": payable_amount,
         "receipt_header": "باشگاه مشتریان مرکز خرید مهستان"
     }
 
-# ----------------- 3. POS Settle Endpoint -----------------
 @app.post("/api/pos/settle")
-def pos_settle(payload: SettleRequest):
+def pos_settle(data: SettleRequest):
     conn = get_db()
     cursor = conn.cursor()
     
-    # بررسی تکراری نبودن شماره تراکنش شاپرک (RRN)
-    cursor.execute("SELECT rrn FROM transactions WHERE rrn = ?", (payload.rrn,))
-    if cursor.fetchone():
+    cashback = int(data.paid_amount * 0.05)
+    is_winner = (random.randint(1, 100) == 77)
+    instant_prize = 10000000 if is_winner else 0
+    
+    try:
+        cursor.execute(
+            "INSERT INTO transactions (rrn, mobile, terminal_id, paid_amount, cashback_amount, is_winner) VALUES (?, ?, ?, ?, ?, ?)",
+            (data.rrn, data.mobile, data.terminal_id, data.paid_amount, cashback, is_winner)
+        )
+    except sqlite3.IntegrityError:
         conn.close()
-        raise HTTPException(status_code=400, detail="این تراکنش قبلاً تسویه شده است.")
-    
-    # ۱. ابطال کوپن مصرف‌شده
+        raise HTTPException(status_code=400, detail="این شماره تراکنش قبلاً ثبت شده است.")
+        
     cursor.execute(
-        "UPDATE coupons SET status = 'USED' WHERE mobile = ? AND terminal_id = ? AND status = 'ACTIVE'",
-        (payload.mobile, payload.terminal_id)
+        "UPDATE coupons SET status = 'USED' WHERE id = (SELECT id FROM coupons WHERE mobile = ? AND terminal_id = ? AND status = 'ACTIVE' ORDER BY id DESC LIMIT 1)",
+        (data.mobile, data.terminal_id)
     )
     
-    # ۲. محاسبه ۵٪ کش‌بک
-    cashback = int(payload.paid_amount * 0.05)
+    cursor.execute("INSERT OR IGNORE INTO users (mobile) VALUES (?)", (data.mobile,))
+    cursor.execute("UPDATE users SET wallet_balance = wallet_balance + ? WHERE mobile = ?", (cashback + instant_prize, data.mobile))
     
-    # ثبت کاربر در صورت عدم وجود و شارژ کیف پول
-    cursor.execute("INSERT OR IGNORE INTO users (mobile, wallet_balance) VALUES (?, 0)", (payload.mobile,))
-    cursor.execute("UPDATE users SET wallet_balance = wallet_balance + ? WHERE mobile = ?", (cashback, payload.mobile))
-    
-    # دریافت موجودی لحظه‌ای
-    cursor.execute("SELECT wallet_balance FROM users WHERE mobile = ?", (payload.mobile,))
-    current_wallet = cursor.fetchone()["wallet_balance"]
-    
-    # ۳. ارزیابی قرعه‌کشی آنی (ساعت ۱۸ الی ۲۲ روزهای یکشنبه(۶)، دوشنبه(۰) و سه‌شنبه(۱))
-    now = datetime.now()
-    weekday = now.weekday()
-    hour = now.hour
-    
-    is_winner = False
-    prize_amount = 0
-    
-    # بررسی شرط زمان و سقف ۳ برنده در روز
-    if weekday in [6, 0, 1] and 18 <= hour < 22:
-        cursor.execute("SELECT COUNT(*) as win_count FROM transactions WHERE is_winner = 1 AND DATE(created_at) = DATE('now')")
-        daily_wins = cursor.fetchone()["win_count"]
-        if daily_wins < 3:
-            is_winner = True
-            prize_amount = 10000000  # جایزه ۱ میلیون تومانی به ریال
-            cursor.execute("UPDATE users SET wallet_balance = wallet_balance + ? WHERE mobile = ?", (prize_amount, payload.mobile))
-            current_wallet += prize_amount
-
-    # ثبت لاگ تراکنش
-    cursor.execute(
-        "INSERT INTO transactions (rrn, mobile, terminal_id, paid_amount, cashback_amount, is_winner) VALUES (?, ?, ?, ?, ?, ?)",
-        (payload.rrn, payload.mobile, payload.terminal_id, payload.paid_amount, cashback, 1 if is_winner else 0)
-    )
+    cursor.execute("SELECT wallet_balance FROM users WHERE mobile = ?", (data.mobile,))
+    total_wallet = cursor.fetchone()["wallet_balance"]
     
     conn.commit()
     conn.close()
     
-    # متن پیام چاپ رسید کارتخوان
     pos_msg = f"اعتبار افزوده: {cashback:,} ریال"
     if is_winner:
-        pos_msg = f"تبریک! برنده جایزه ۱ میلیونی شدید | {pos_msg}"
+        pos_msg += " | تبریک! شما برنده جایزه ۱ میلیونی شدید!"
         
     return {
         "status": "SUCCESS",
         "cashback_added": cashback,
-        "instant_prize_won": prize_amount,
         "is_instant_winner": is_winner,
         "pos_message": pos_msg,
-        "total_wallet": current_wallet
+        "total_wallet": total_wallet
     }
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
-import os
-
-# اطمینان از اتصال پوشه استاتیک (اگر قبلاً ست نشده باشد)
-if not os.path.exists("static"):
-    os.makedirs("static")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/admin")
-def serve_admin_page():
-    return FileResponse("static/admin.html")
 
 @app.get("/api/admin/overview")
 def admin_overview():
     conn = get_db()
     cursor = conn.cursor()
     
-    # آمار کل
     cursor.execute("SELECT COUNT(*) as count FROM users")
     total_users = cursor.fetchone()["count"]
     
@@ -254,26 +233,23 @@ def admin_overview():
     cursor.execute("SELECT COUNT(*) as count FROM transactions WHERE is_winner = 1")
     total_winners = cursor.fetchone()["count"]
     
-    # آخرین تراکنش‌ها
     cursor.execute("""
         SELECT t.rrn, t.mobile, s.store_name, t.paid_amount, t.cashback_amount, t.is_winner, t.created_at
         FROM transactions t
         LEFT JOIN stores s ON t.terminal_id = s.terminal_id
-        ORDER BY t.created_at DESC LIMIT 15
+        ORDER BY t.created_at DESC LIMIT 20
     """)
     transactions = [dict(row) for row in cursor.fetchall()]
     
-    # آخرین کوپن‌های گردونه
     cursor.execute("""
         SELECT c.id, c.mobile, s.store_name, c.discount_percent, c.status, c.created_at
         FROM coupons c
         LEFT JOIN stores s ON c.terminal_id = s.terminal_id
-        ORDER BY c.id DESC LIMIT 15
+        ORDER BY c.id DESC LIMIT 20
     """)
     coupons = [dict(row) for row in cursor.fetchall()]
     
     conn.close()
-    
     return {
         "stats": {
             "total_users": total_users,
