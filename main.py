@@ -223,3 +223,64 @@ def pos_settle(payload: SettleRequest):
         "pos_message": pos_msg,
         "total_wallet": current_wallet
     }
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+import os
+
+# اطمینان از اتصال پوشه استاتیک (اگر قبلاً ست نشده باشد)
+if not os.path.exists("static"):
+    os.makedirs("static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/admin")
+def serve_admin_page():
+    return FileResponse("static/admin.html")
+
+@app.get("/api/admin/overview")
+def admin_overview():
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # آمار کل
+    cursor.execute("SELECT COUNT(*) as count FROM users")
+    total_users = cursor.fetchone()["count"]
+    
+    cursor.execute("SELECT COALESCE(SUM(wallet_balance), 0) as total FROM users")
+    total_wallet = cursor.fetchone()["total"]
+    
+    cursor.execute("SELECT COUNT(*) as count FROM transactions")
+    total_tx = cursor.fetchone()["count"]
+    
+    cursor.execute("SELECT COUNT(*) as count FROM transactions WHERE is_winner = 1")
+    total_winners = cursor.fetchone()["count"]
+    
+    # آخرین تراکنش‌ها
+    cursor.execute("""
+        SELECT t.rrn, t.mobile, s.store_name, t.paid_amount, t.cashback_amount, t.is_winner, t.created_at
+        FROM transactions t
+        LEFT JOIN stores s ON t.terminal_id = s.terminal_id
+        ORDER BY t.created_at DESC LIMIT 15
+    """)
+    transactions = [dict(row) for row in cursor.fetchall()]
+    
+    # آخرین کوپن‌های گردونه
+    cursor.execute("""
+        SELECT c.id, c.mobile, s.store_name, c.discount_percent, c.status, c.created_at
+        FROM coupons c
+        LEFT JOIN stores s ON c.terminal_id = s.terminal_id
+        ORDER BY c.id DESC LIMIT 15
+    """)
+    coupons = [dict(row) for row in cursor.fetchall()]
+    
+    conn.close()
+    
+    return {
+        "stats": {
+            "total_users": total_users,
+            "total_wallet": total_wallet,
+            "total_tx": total_tx,
+            "total_winners": total_winners
+        },
+        "transactions": transactions,
+        "coupons": coupons
+    }
