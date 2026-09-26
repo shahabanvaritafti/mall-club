@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت باشگاه مشتریان مهستان</title>
+    <style>
+        * { box-sizing: border-box; font-family: Tahoma, 'B Nazanin', sans-serif; }
+        body { background-color: #244447; color: #fff; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #376569; padding-bottom: 15px; margin-bottom: 25px; }
+        h1 { margin: 0; font-size: 22px; color: #e0f2f1; }
+        .btn-refresh { background-color: #1e282d; color: #fff; border: 1px solid #4eb5a5; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .card { background-color: #1e282d; padding: 18px; border-radius: 10px; border-right: 4px solid #4eb5a5; }
+        .card-title { font-size: 13px; color: #b0bec5; margin-bottom: 8px; }
+        .card-val { font-size: 22px; font-weight: bold; color: #ffffff; }
+        .section-box { background-color: #1a3235; border-radius: 10px; padding: 20px; margin-bottom: 25px; }
+        h2 { font-size: 17px; margin-top: 0; margin-bottom: 15px; color: #80cbc4; }
+        table { width: 100%; border-collapse: collapse; text-align: right; font-size: 13px; }
+        th, td { padding: 10px; border-bottom: 1px solid #2d5559; }
+        th { background-color: #15272a; color: #cfd8dc; }
+        .tag-active { background: #2e7d32; padding: 3px 8px; border-radius: 4px; font-size: 11px; }
+        .tag-used { background: #616161; padding: 3px 8px; border-radius: 4px; font-size: 11px; }
+        .tag-win { background: #b78103; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>مرکز کنترل باشگاه مشتریان پاساژ مهستان</h1>
+            <button class="btn-refresh" onclick="fetchData()">بروزرسانی داده‌ها</button>
+        </header>
+
+        <div class="cards">
+            <div class="card">
+                <div class="card-title">تعداد کل اعضا</div>
+                <div class="card-val" id="total_users">-</div>
+            </div>
+            <div class="card">
+                <div class="card-title">کل موجودی کیف‌پول (کش‌بک)</div>
+                <div class="card-val" id="total_wallet">- ریال</div>
+            </div>
+            <div class="card">
+                <div class="card-title">تعداد تراکنش‌های تسویه‌شده</div>
+                <div class="card-val" id="total_tx">-</div>
+            </div>
+            <div class="card">
+                <div class="card-title">برندگان قرعه‌کشی آنی</div>
+                <div class="card-val" id="total_winners">- نفر</div>
+            </div>
+        </div>
+
+        <div class="section-box">
+            <h2>آخرین تراکنش‌های ثبت‌شده از کارتخوان‌ها</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>شماره موبایل</th>
+                        <th>فروشگاه</th>
+                        <th>مبلغ پرداختی</th>
+                        <th>کش‌بک شارژشده</th>
+                        <th>وضعیت جایزه آنی</th>
+                        <th>کد پیگیری شاپرک (RRN)</th>
+                        <th>زمان</th>
+                    </tr>
+                </thead>
+                <tbody id="tx_tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="section-box">
+            <h2>وضعیت کوپن‌های صادرشده از گردونه</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>شناسه</th>
+                        <th>شماره موبایل</th>
+                        <th>فروشگاه</th>
+                        <th>درصد تخفیف</th>
+                        <th>وضعیت</th>
+                        <th>تاریخ ایجاد</th>
+                    </tr>
+                </thead>
+                <tbody id="cp_tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData() {
+            try {
+                const res = await fetch('/api/admin/overview');
+                const data = await res.json();
+
+                document.getElementById('total_users').innerText = data.stats.total_users.toLocaleString('fa-IR');
+                document.getElementById('total_wallet').innerText = data.stats.total_wallet.toLocaleString('fa-IR') + ' ریال';
+                document.getElementById('total_tx').innerText = data.stats.total_tx.toLocaleString('fa-IR');
+                document.getElementById('total_winners').innerText = data.stats.total_winners.toLocaleString('fa-IR') + ' نفر';
+
+                const txTbody = document.getElementById('tx_tbody');
+                txTbody.innerHTML = data.transactions.map(t => `
+                    <tr>
+                        <td>${t.mobile}</td>
+                        <td>${t.store_name || '-'}</td>
+                        <td>${t.paid_amount.toLocaleString('fa-IR')} ریال</td>
+                        <td>${t.cashback_amount.toLocaleString('fa-IR')} ریال</td>
+                        <td>${t.is_winner ? '<span class="tag-win">برنده ۱ میلیونی</span>' : 'عادی'}</td>
+                        <td>${t.rrn}</td>
+                        <td>${t.created_at}</td>
+                    </tr>
+                `).join('');
+
+                const cpTbody = document.getElementById('cp_tbody');
+                cpTbody.innerHTML = data.coupons.map(c => `
+                    <tr>
+                        <td>${c.id}</td>
+                        <td>${c.mobile}</td>
+                        <td>${c.store_name || '-'}</td>
+                        <td>٪${c.discount_percent}</td>
+                        <td><span class="${c.status === 'ACTIVE' ? 'tag-active' : 'tag-used'}">${c.status === 'ACTIVE' ? 'فعال' : 'مصرف‌شده'}</span></td>
+                        <td>${c.created_at}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        fetchData();
+        setInterval(fetchData, 10000);
+    </script>
+</body>
+</html>
