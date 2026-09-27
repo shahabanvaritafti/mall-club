@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>صورت‌حساب شارژ مجتمع تجاری مهستان</title>
+    <style>
+        * { box-sizing: border-box; font-family: Tahoma, 'B Nazanin', sans-serif; }
+        body { background-color: #0f1c1e; color: #fff; margin: 0; padding: 20px 12px; display: flex; justify-content: center; }
+        .invoice-card {
+            background-color: #1a2f32; border: 1px solid #376569; border-radius: 18px;
+            max-width: 440px; width: 100%; box-shadow: 0 12px 35px rgba(0,0,0,0.5); overflow: hidden;
+        }
+        .header { background: linear-gradient(135deg, #1f4044, #13272a); padding: 22px 20px; text-align: center; border-bottom: 2px solid #376569; }
+        .header h1 { font-size: 18px; margin: 0 0 6px; color: #80cbc4; }
+        .header p { margin: 0; font-size: 13px; color: #cfd8dc; }
+        .content { padding: 20px; }
+        .item-row { display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px dashed #284c50; font-size: 13px; color: #eceff1; }
+        .total-box { background-color: #122224; border-radius: 12px; padding: 15px; margin: 18px 0; border: 1px solid #28555a; }
+        .total-row { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: bold; color: #80cbc4; }
+        .total-row span.val { font-size: 18px; color: #ffd54f; }
+        .btn-pay {
+            display: block; width: 100%; background: #4eb5a5; color: #0b1a1c; text-align: center;
+            padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold;
+            cursor: pointer; text-decoration: none; box-sizing: border-box; margin-top: 15px;
+            box-shadow: 0 4px 15px rgba(78, 181, 165, 0.3);
+        }
+        .btn-pay:hover { background: #3fa293; }
+        .alert { padding: 12px; border-radius: 8px; font-size: 13px; text-align: center; margin-bottom: 15px; line-height: 1.6; }
+        .alert-success { background: #1b5e20; color: #c8e6c9; border: 1px solid #2e7d32; }
+        .alert-danger { background: #b71c1c; color: #ffcdd2; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+        .badge-pending { background: #f57f17; color: #fff; }
+        .badge-paid { background: #2e7d32; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="invoice-card" id="card">
+    <div class="header">
+        <h1>مرکز خرید مهستان</h1>
+        <p>صورت‌حساب رسمی شارژ و خدمات مشاع</p>
+    </div>
+    
+    <div class="content">
+        <div id="alertBox"></div>
+
+        <div class="item-row"><span>شماره فاکتور:</span> <b id="invId">-</b></div>
+        <div class="item-row"><span>کد پلاک / واحد:</span> <b id="unitId" style="color: #80cbc4;">-</b></div>
+        <div class="item-row"><span>فروشگاه / بهره‌بردار:</span> <span id="shopName">-</span></div>
+        <div class="item-row"><span>دوره شارژ:</span> <span id="period">-</span></div>
+        <div class="item-row"><span>مهلت تسویه:</span> <span id="dueDate" style="color: #ffab91;">-</span></div>
+        <div class="item-row"><span>وضعیت:</span> <span id="statusBadge">-</span></div>
+
+        <div style="margin-top: 15px; font-size: 12px; color: #80cbc4; font-weight: bold;">ریز محاسبات دوره:</div>
+        <div class="item-row"><span>شارژ پایه نگهداری و متراژ:</span> <span id="baseCharge">-</span></div>
+        <div class="item-row"><span>سهم انرژی، آب و چیلر:</span> <span id="utilityCharge">-</span></div>
+        <div class="item-row" id="arrearsRow" style="display: none; color: #ef5350;"><span>مانده بدهی قبلی:</span> <span id="arrears">-</span></div>
+
+        <div class="total-box">
+            <div class="total-row">
+                <span>مبلغ کل قابل پرداخت:</span>
+                <span class="val" id="totalAmount">-</span>
+            </div>
+        </div>
+
+        <div id="actionArea">
+            <a id="payLink" href="#" class="btn-pay">💳 پرداخت آنلاین با درگاه بانکی شاپرک</a>
+        </div>
+        
+        <p style="font-size: 11px; color: #78909c; text-align: center; margin-top: 15px; line-height: 1.5;">
+            تراکنش‌ها به‌طور لحظه‌ای ثبت شده و نیازی به ارسال فیش به دفتر مدیریت نمی‌باشد.
+        </p>
+    </div>
+</div>
+
+<script>
+    const pathParts = window.location.pathname.split('/');
+    const invoiceId = pathParts[pathParts.length - 1];
+    const urlParams = new URLSearchParams(window.location.search);
+
+    async function loadInvoice() {
+        try {
+            const res = await fetch('/billing/api/invoice/' + invoiceId);
+            if (!res.ok) {
+                document.getElementById('card').innerHTML = '<div style="padding: 30px; text-align:center;">صورت‌حسابی با این شناسه یافت نشد.</div>';
+                return;
+            }
+            const data = await res.json();
+
+            document.getElementById('invId').innerText = data.invoice_id;
+            document.getElementById('unitId').innerText = data.unit_id;
+            document.getElementById('shopName').innerText = data.shop_name + (data.tenant_name ? ' (' + data.tenant_name + ')' : '');
+            document.getElementById('period').innerText = data.period;
+            document.getElementById('dueDate').innerText = data.due_date || '-';
+            document.getElementById('baseCharge').innerText = data.base_charge.toLocaleString('fa-IR') + ' تومان';
+            document.getElementById('utilityCharge').innerText = (data.utility_charge || 0).toLocaleString('fa-IR') + ' تومان';
+            document.getElementById('totalAmount').innerText = data.total_amount.toLocaleString('fa-IR') + ' تومان';
+
+            if (data.arrears > 0) {
+                document.getElementById('arrearsRow').style.display = 'flex';
+                document.getElementById('arrears').innerText = data.arrears.toLocaleString('fa-IR') + ' تومان';
+            }
+
+            const alertBox = document.getElementById('alertBox');
+            const actionArea = document.getElementById('actionArea');
+            const badge = document.getElementById('statusBadge');
+
+            if (data.status === 'PAID') {
+                badge.innerHTML = '<span class="status-badge badge-paid">تسویه شده</span>';
+                actionArea.innerHTML = `
+                    <div class="alert alert-success">
+                        <b>این صورت‌حساب تسویه شده است.</b><br>
+                        روش پرداخت: ${data.payment_method || 'بانکی'}<br>
+                        کد پیگیری شاپرک (RRN): <b>${data.rrn || '-'}</b>
+                    </div>
+                `;
+            } else {
+                badge.innerHTML = '<span class="status-badge badge-pending">در انتظار پرداخت</span>';
+                document.getElementById('payLink').href = '/billing/pay/' + data.invoice_id;
+
+                if (urlParams.get('payment') === 'failed') {
+                    alertBox.innerHTML = '<div class="alert alert-danger">تراکنش بانکی لغو شد یا ناموفق بود. مجدداً تلاش نمایید.</div>';
+                }
+            }
+
+            if (urlParams.get('payment') === 'success') {
+                alertBox.innerHTML = `<div class="alert alert-success">پرداخت با موفقیت انجام شد.<br>کد پیگیری: ${urlParams.get('rrn')}</div>`;
+            }
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    loadInvoice();
+</script>
+
+</body>
+</html>
