@@ -81,7 +81,8 @@
 
     async function loadInvoice() {
         try {
-            const res = await fetch('/billing/api/invoice/' + invoiceId);
+            // ۱. دریافت اطلاعات فاکتور از پورت مستقل (تغییر اول)
+            const res = await fetch('/api/invoice/' + invoiceId);
             if (!res.ok) {
                 document.getElementById('card').innerHTML = '<div style="padding: 30px; text-align:center;">صورت‌حسابی با این شناسه یافت نشد.</div>';
                 return;
@@ -117,7 +118,8 @@
                 `;
             } else {
                 badge.innerHTML = '<span class="status-badge badge-pending">در انتظار پرداخت</span>';
-                document.getElementById('payLink').href = '/billing/pay/' + data.invoice_id;
+                // ۲. ساخت لینک پرداخت مستقیم (تغییر دوم)
+                document.getElementById('payLink').href = '/pay/' + data.invoice_id;
 
                 if (urlParams.get('payment') === 'failed') {
                     alertBox.innerHTML = '<div class="alert alert-danger">تراکنش بانکی لغو شد یا ناموفق بود. مجدداً تلاش نمایید.</div>';
