@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from typing import Optional, List, Any
 import os
 
 app = FastAPI(title="Mahestan Club Core API")
@@ -31,7 +32,6 @@ def get_db():
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
-    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS stores (
             terminal_id TEXT PRIMARY KEY,
@@ -39,7 +39,6 @@ def init_db():
             default_discount INTEGER DEFAULT 5
         )
     """)
-    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             mobile TEXT PRIMARY KEY,
@@ -47,7 +46,6 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS coupons (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +56,6 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,28 +81,151 @@ def init_db():
         ("99354094", "چیلک", 5)
     ]
     cursor.executemany("INSERT OR REPLACE INTO stores (terminal_id, store_name, default_discount) VALUES (?, ?, ?)", initial_stores)
-    
     conn.commit()
     conn.close()
 
 init_db()
 
-class SpinRequest(BaseModel):
-    mobile: str
-    discount_percent: int
-    terminal_id: str
+# --- ساختارهای داده طبق داکیومنت سامان‌کیش ---
+class SepInqueryData(BaseModel):
+    cardNumber: Optional[str] = None
+    terminalId: Any
+    merchantId: Optional[Any] = None
+    terminalLang: Optional[int] = 0
+    currencyCode: Optional[int] = 0
+    posstep: Optional[int] = 0
+    requestedTransactionAmount: int
+    addData: Optional[str] = ""
+    trackingNo: Optional[Any] = None
 
-class InquiryRequest(BaseModel):
-    mobile: str
-    terminal_id: str
-    amount: int
+class SepInqueryEnvelope(BaseModel):
+    securityBlock: Optional[str] = None
+    inqueryrequest: SepInqueryData
 
-class SettleRequest(BaseModel):
-    mobile: str
-    terminal_id: str
-    paid_amount: int
+class SepNotifyData(BaseModel):
+    trStatus: Optional[int] = 0
+    totalAmount: str
+    sharedAmountIban: Optional[Any] = None
     rrn: str
+    transactionDate: Optional[str] = None
+    responseId: Optional[str] = None
+    terminalId: str
+    trackingNo: Optional[str] = None
+    transactionState: Optional[str] = None
+    transactionStateDescription: Optional[str] = None
 
+class SepNotifyEnvelope(BaseModel):
+    securityBlock: Optional[str] = None
+    notifyrequest: SepNotifyData
+
+# --- وب‌سرویس ۱ سامان‌کیش: استعلام تخفیف ---
+@app.post("/RequestInquery")
+def sep_request_inquery(payload: SepInqueryEnvelope):
+    req = payload.inqueryrequest
+    terminal_id = str(req.terminalId).strip()
+    raw_amount = int(req.requestedTransactionAmount)
+    
+    # استخراج شماره موبایل از فیلد addData (مثلاً اگر "0912..." یا "mobile:0912..." بود)
+    raw_add = str(req.addData or "").strip()
+    mobile = raw_add.split(":")[-1].strip() if ":" in raw_add else raw_add
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT store_name FROM stores WHERE terminal_id = ?", (terminal_id,))
+    store = cursor.fetchone()
+    store_name = store["store_name"] if store else "مهستان"
+    
+    # بررسی کوپن فعال
+    cursor.execute(
+        "SELECT id, discount_percent FROM coupons WHERE mobile = ? AND terminal_id = ? AND status = 'ACTIVE' ORDER BY id DESC LIMIT 1",
+        (mobile, terminal_id)
+    )
+    coupon = cursor.fetchone()
+    
+    discount_amount = 0
+    discount_percent = 0
+    if coupon:
+        discount_percent = coupon["discount_percent"]
+        discount_amount = int(raw_amount * (discount_percent / 100))
+        
+    payable_amount = max(0, raw_amount - discount_amount)
+    response_id = f"MHS-{random.randint(100000, 999999)}"
+    
+    conn.close()
+    
+    return {
+        "ResponseCode": 0,
+        "ResponseErrorDescription": "",
+        "ResponseId": response_id,
+        "TotalPayableAmount": str(payable_amount),
+        "SharedAmountIban": [],
+        "Preview": [
+            f"باشگاه مهستان",
+            f"فروشگاه: {store_name[:10]}",
+            f"تخفیف: {discount_percent}٪"
+        ],
+        "UserNotifiable": {
+            "FooterMessage": "مرکز خرید مهستان - با تشکر از خرید شما",
+            "PrintItem": [
+                {
+                    "Item": "باشگاه مهستان",
+                    "Value": f"تخفیف {discount_percent}٪",
+                    "Alignment": 0,
+                    "ReceiptType": 2
+                }
+            ]
+        }
+    }
+
+# --- وب‌سرویس ۲ سامان‌کیش: تایید نهایی و اعلام تراکنش شاپرک ---
+@app.post("/notifyRequest")
+def sep_notify_request(payload: SepNotifyEnvelope):
+    req = payload.notifyrequest
+    terminal_id = str(req.terminalId).strip()
+    paid_amount = int(req.totalAmount)
+    rrn = str(req.rrn)
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # شارژ ۵٪ کش‌بک
+    cashback = int(paid_amount * 0.05)
+    is_winner = (random.randint(1, 100) == 77)
+    
+    # پیدا کردن آخرین شماره موبایل فعال در این پایانه
+    cursor.execute(
+        "SELECT mobile FROM coupons WHERE terminal_id = ? AND status = 'ACTIVE' ORDER BY id DESC LIMIT 1",
+        (terminal_id,)
+    )
+    found = cursor.fetchone()
+    mobile = found["mobile"] if found else "نامشخص"
+    
+    try:
+        cursor.execute(
+            "INSERT INTO transactions (rrn, mobile, terminal_id, paid_amount, cashback_amount, is_winner) VALUES (?, ?, ?, ?, ?, ?)",
+            (rrn, mobile, terminal_id, paid_amount, cashback, is_winner)
+        )
+        if mobile != "نامشخص":
+            cursor.execute(
+                "UPDATE coupons SET status = 'USED' WHERE id = (SELECT id FROM coupons WHERE mobile = ? AND terminal_id = ? AND status = 'ACTIVE' ORDER BY id DESC LIMIT 1)",
+                (mobile, terminal_id)
+            )
+            cursor.execute("UPDATE users SET wallet_balance = wallet_balance + ? WHERE mobile = ?", (cashback, mobile))
+        conn.commit()
+    except Exception as e:
+        pass
+    finally:
+        conn.close()
+        
+    return {
+        "Status": True,
+        "ErrorCode": "0",
+        "ErrorDesciption": "",
+        "RejectTransactionStatus": False
+    }
+
+# --- اندپوینت‌های وب و داشبورد مهستان ---
 @app.get("/")
 def home():
     return FileResponse("static/index.html")
@@ -118,20 +238,15 @@ def serve_admin():
 def serve_pos():
     return FileResponse("static/pos.html")
 
-@app.get("/api/stores")
-def get_stores():
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT terminal_id, store_name, default_discount FROM stores")
-    stores = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return stores
+class SpinRequest(BaseModel):
+    mobile: str
+    discount_percent: int
+    terminal_id: str
 
 @app.post("/api/spin")
 def spin_wheel(data: SpinRequest):
     conn = get_db()
     cursor = conn.cursor()
-    
     cursor.execute("INSERT OR IGNORE INTO users (mobile) VALUES (?)", (data.mobile,))
     cursor.execute(
         "INSERT INTO coupons (mobile, terminal_id, discount_percent, status) VALUES (?, ?, ?, 'ACTIVE')",
@@ -141,98 +256,18 @@ def spin_wheel(data: SpinRequest):
     conn.close()
     return {"status": "OK", "message": f"کوپن {data.discount_percent}٪ با موفقیت ثبت شد."}
 
-@app.post("/api/pos/inquiry")
-def pos_inquiry(data: InquiryRequest):
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT store_name FROM stores WHERE terminal_id = ?", (data.terminal_id,))
-    store = cursor.fetchone()
-    store_name = store["store_name"] if store else "فروشگاه مهستان"
-    
-    cursor.execute(
-        "SELECT id, discount_percent FROM coupons WHERE mobile = ? AND terminal_id = ? AND status = 'ACTIVE' ORDER BY id DESC LIMIT 1",
-        (data.mobile, data.terminal_id)
-    )
-    coupon = cursor.fetchone()
-    
-    discount_amount = 0
-    if coupon:
-        discount_amount = int(data.amount * (coupon["discount_percent"] / 100))
-        
-    payable_amount = max(0, data.amount - discount_amount)
-    conn.close()
-    
-    return {
-        "status": "OK",
-        "store_name": store_name,
-        "original_amount": data.amount,
-        "discount_amount": discount_amount,
-        "payable_amount": payable_amount,
-        "receipt_header": "باشگاه مشتریان مرکز خرید مهستان"
-    }
-
-@app.post("/api/pos/settle")
-def pos_settle(data: SettleRequest):
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    cashback = int(data.paid_amount * 0.05)
-    is_winner = (random.randint(1, 100) == 77)
-    instant_prize = 10000000 if is_winner else 0
-    
-    try:
-        cursor.execute(
-            "INSERT INTO transactions (rrn, mobile, terminal_id, paid_amount, cashback_amount, is_winner) VALUES (?, ?, ?, ?, ?, ?)",
-            (data.rrn, data.mobile, data.terminal_id, data.paid_amount, cashback, is_winner)
-        )
-    except sqlite3.IntegrityError:
-        conn.close()
-        raise HTTPException(status_code=400, detail="این شماره تراکنش قبلاً ثبت شده است.")
-        
-    cursor.execute(
-        "UPDATE coupons SET status = 'USED' WHERE id = (SELECT id FROM coupons WHERE mobile = ? AND terminal_id = ? AND status = 'ACTIVE' ORDER BY id DESC LIMIT 1)",
-        (data.mobile, data.terminal_id)
-    )
-    
-    cursor.execute("INSERT OR IGNORE INTO users (mobile) VALUES (?)", (data.mobile,))
-    cursor.execute("UPDATE users SET wallet_balance = wallet_balance + ? WHERE mobile = ?", (cashback + instant_prize, data.mobile))
-    
-    cursor.execute("SELECT wallet_balance FROM users WHERE mobile = ?", (data.mobile,))
-    total_wallet = cursor.fetchone()["wallet_balance"]
-    
-    conn.commit()
-    conn.close()
-    
-    pos_msg = f"اعتبار افزوده: {cashback:,} ریال"
-    if is_winner:
-        pos_msg += " | تبریک! شما برنده جایزه ۱ میلیونی شدید!"
-        
-    return {
-        "status": "SUCCESS",
-        "cashback_added": cashback,
-        "is_instant_winner": is_winner,
-        "pos_message": pos_msg,
-        "total_wallet": total_wallet
-    }
-
 @app.get("/api/admin/overview")
 def admin_overview():
     conn = get_db()
     cursor = conn.cursor()
-    
     cursor.execute("SELECT COUNT(*) as count FROM users")
     total_users = cursor.fetchone()["count"]
-    
     cursor.execute("SELECT COALESCE(SUM(wallet_balance), 0) as total FROM users")
     total_wallet = cursor.fetchone()["total"]
-    
     cursor.execute("SELECT COUNT(*) as count FROM transactions")
     total_tx = cursor.fetchone()["count"]
-    
     cursor.execute("SELECT COUNT(*) as count FROM transactions WHERE is_winner = 1")
     total_winners = cursor.fetchone()["count"]
-    
     cursor.execute("""
         SELECT t.rrn, t.mobile, s.store_name, t.paid_amount, t.cashback_amount, t.is_winner, t.created_at
         FROM transactions t
@@ -240,7 +275,6 @@ def admin_overview():
         ORDER BY t.created_at DESC LIMIT 20
     """)
     transactions = [dict(row) for row in cursor.fetchall()]
-    
     cursor.execute("""
         SELECT c.id, c.mobile, s.store_name, c.discount_percent, c.status, c.created_at
         FROM coupons c
@@ -248,7 +282,6 @@ def admin_overview():
         ORDER BY c.id DESC LIMIT 20
     """)
     coupons = [dict(row) for row in cursor.fetchall()]
-    
     conn.close()
     return {
         "stats": {
